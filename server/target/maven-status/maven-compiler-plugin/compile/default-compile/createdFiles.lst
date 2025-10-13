@@ -1,4 +1,3 @@
 com\lab2\model\Result.class
 com\lab2\model\ResultsStorage.class
-com\lab2\servlets\ControllerServlet.class
 com\lab2\servlets\AreaCheckServlet.class

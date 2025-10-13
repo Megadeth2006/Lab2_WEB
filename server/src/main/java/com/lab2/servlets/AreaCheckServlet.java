@@ -32,6 +32,12 @@ public class AreaCheckServlet extends HttpServlet {
     private void processRequest(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
+        System.out.println("AreaCheckServlet: получен запрос");
+        System.out.println("Метод: " + request.getMethod());
+        System.out.println("Параметры: x=" + request.getParameter("x") + 
+                          ", y=" + request.getParameter("y") + 
+                          ", r=" + request.getParameter("r"));
+        
         long startTime = System.nanoTime();
         
         try {
@@ -39,6 +45,8 @@ public class AreaCheckServlet extends HttpServlet {
             String xStr = request.getParameter("x").replace(",", ".");
             String yStr = request.getParameter("y").replace(",", ".");
             String rStr = request.getParameter("r").replace(",", ".");
+            
+            System.out.println("Обработанные параметры: x=" + xStr + ", y=" + yStr + ", r=" + rStr);
             
             double x = Double.parseDouble(xStr);
             double y = Double.parseDouble(yStr);
@@ -68,13 +76,14 @@ public class AreaCheckServlet extends HttpServlet {
             // Добавляем результат в хранилище
             storage.addResult(result);
             
-            // Формируем HTML-страницу с результатом
-            sendResultResponse(response, result);
+            // Возвращаем JSON ответ вместо HTML страницы
+            System.out.println("Отправляем JSON ответ для результата: " + result);
+            sendJsonResponse(response, result);
             
         } catch (NumberFormatException e) {
-            sendErrorResponse(response, "Ошибка: некорректный формат числа. Убедитесь, что введены корректные числовые значения");
+            sendJsonErrorResponse(response, "Ошибка: некорректный формат числа. Убедитесь, что введены корректные числовые значения");
         } catch (Exception e) {
-            sendErrorResponse(response, "Ошибка сервера: " + e.getMessage());
+            sendJsonErrorResponse(response, "Ошибка сервера: " + e.getMessage());
         }
     }
     
@@ -131,6 +140,23 @@ public class AreaCheckServlet extends HttpServlet {
     }
     
     /**
+     * Отправка JSON ответа с результатом
+     */
+    private void sendJsonResponse(HttpServletResponse response, Result result) 
+            throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        
+        // Формируем JSON ответ
+        String json = String.format(
+            "{\"success\": true, \"result\": {\"x\": %.2f, \"y\": %.2f, \"r\": %.2f, \"hit\": %s, \"executionTime\": %d, \"timestamp\": \"%s\"}}",
+            result.getX(), result.getY(), result.getR(), result.isHit(), result.getExecutionTime(), result.getTimestamp()
+        );
+        
+        out.println(json);
+    }
+
+    /**
      * Формирование HTML-страницы с результатом
      */
     private void sendResultResponse(HttpServletResponse response, Result result) 
@@ -185,6 +211,18 @@ public class AreaCheckServlet extends HttpServlet {
         out.println("</html>");
     }
     
+    /**
+     * Отправка JSON ошибки
+     */
+    private void sendJsonErrorResponse(HttpServletResponse response, String errorMessage) 
+            throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        
+        String json = String.format("{\"success\": false, \"error\": \"%s\"}", errorMessage);
+        out.println(json);
+    }
+
     /**
      * Отправка страницы с ошибкой
      */
